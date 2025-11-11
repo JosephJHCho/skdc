@@ -2,156 +2,170 @@
 <html lang="ko">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
     <title>일대일양육 암송구절</title>
     <style>
-      html,
       body {
-        margin: 0;
-        padding: 0;
         font-family: "Noto Sans KR", sans-serif;
         background: #f6f6f6;
-        width: 100%;
-        height: 100%;
+        padding: 10px;
+        font-size: 1rem;
       }
-      body {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        padding: 0px;
-        font-size: 1.2rem;
-      }
-      #category-select {
-        width: 90%;
-        padding: 12px;
-        font-size: 1.8rem;
-        border-radius: 8px;
+
+      h1 {
+        font-size: 1.5rem;
+        text-align: center;
         margin-bottom: 10px;
       }
+
+      /* --- 카테고리 --- */
+      #category-select {
+        display: block;
+        width: 100%;
+        max-width: 600px;
+        margin: 0 auto 5px;
+        padding: 6px;
+        font-size: 1rem;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        background-color: white;
+      }
+
+      /* --- 1,2,3 번호 버튼 --- */
       .subnav {
         display: flex;
         justify-content: center;
         flex-wrap: nowrap;
         overflow-x: auto;
-        gap: 8px;
-        margin-bottom: 10px;
-        width: 90%;
+        gap: 4px;
+        margin-bottom: 5px;
       }
       .subnav-btn {
-        flex: 0 0 auto;
-        min-width: 60px;
-        padding: 14px 0;
-        font-size: 1.8rem;
+        min-width: 30px;
+        padding: 4px 0;
         background-color: #ddd;
         border: none;
-        border-radius: 8px;
+        border-radius: 4px;
         cursor: pointer;
-        transition: 0.2s;
+        font-size: 0.9rem;
+        flex: 0 0 auto;
       }
       .subnav-btn.active,
       .subnav-btn:hover {
         background-color: #0084ff;
         color: #fff;
       }
+
+      /* --- 구절 영역 --- */
       .verse-container {
-        background: #fff;
+        background: white;
+        padding: 10px;
+        border-radius: 8px;
+        box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        margin-bottom: 15px;
         width: 100%;
-        flex: 1;
-        margin: 0 auto 10px;
-        padding: 15px;
-        border-radius: 12px;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
         box-sizing: border-box;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-        display: flex;
-        flex-direction: column;
       }
+
       .verse-label {
-        font-size: 1.4rem;
+        display: flex;
+        width: 100%;
         gap: 4px;
-        margin-bottom: 10px;
-      }
-      .status {
+        align-items: center;
+        margin-bottom: 6px;
         font-size: 1.2rem;
-        font-weight: bold;
-        text-align: center;
       }
+
+      .verse-label span,
       .verse-label button {
+        flex: 1;
+        text-align: center;
         font-size: 1.2rem;
-        padding: 6px 0px;
         white-space: nowrap;
+        padding: 6px 4px;
+        border-radius: 4px;
+        border: none;
+        cursor: pointer;
       }
-      .status.correct {
-        color: green;
+
+      .verse-label button#btn-check {
+        background-color: #0084ff;
+        color: white;
       }
-      .status.wrong {
-        color: red;
+
+      .verse-label button#btn-clean {
+        background-color: #888;
+        color: white;
       }
 
       textarea {
         width: 100%;
-        flex: 1;
-        font-size: 2rem;
-        padding: 12px;
-        line-height: 1.6;
-        border-radius: 8px;
-        border: 1px solid #ccc;
-        resize: none;
+        height: 180px;
+        padding: 8px;
+        font-size: 1.2rem;
+        line-height: 1.4;
+        margin-bottom: 5px;
         box-sizing: border-box;
       }
-      .button-group {
-        display: flex;
-        gap: 10px;
-        margin-top: 10px;
-        flex-wrap: wrap;
+
+      .result {
+        font-size: 1.1rem;
+        white-space: pre-wrap;
+        margin-bottom: 4px;
       }
-      button {
-        flex: 1;
-        font-size: 1.8rem;
-        padding: 12px 0;
-        border-radius: 8px;
-        border: none;
-        background: #0084ff;
-        color: #fff;
-        cursor: pointer;
-      }
-      button:hover {
-        background: #006edc;
-      }
-      .result,
-      .original-text {
-        font-size: 1.8rem;
-        margin-top: 10px;
-        word-break: break-word;
-      }
+
       .diff {
         background-color: #ffcccc;
       }
 
+      .original-text {
+        display: none;
+        font-size: 1.1rem;
+        font-weight: bold;
+        margin-top: 4px;
+        border-top: 1px solid #ddd;
+        padding-top: 4px;
+        white-space: pre-wrap;
+      }
+
+      .status {
+        font-weight: bold;
+      }
+
+      button {
+        cursor: pointer;
+        border-radius: 4px;
+        border: none;
+        padding: 6px 0;
+      }
+
+      button:hover {
+        opacity: 0.9;
+      }
+
       @media (max-width: 600px) {
-        #category-select {
-          font-size: 2rem;
-        }
-        .subnav-btn {
-          font-size: 2rem;
-          min-width: 70px;
-          padding: 16px 0;
-        }
         .verse-label {
-          font-size: 2.2rem;
+          font-size: 1rem;
         }
-        .status {
-          font-size: 2rem;
+        .verse-label button,
+        .verse-label span {
+          font-size: 1rem;
         }
         textarea {
-          font-size: 2.2rem;
+          font-size: 1rem;
+          height: 160px;
         }
-        button {
-          font-size: 2rem;
-          padding: 14px 0;
+        #category-select {
+          font-size: 0.95rem;
+          padding: 4px;
         }
-        .result,
-        .original-text {
-          font-size: 2rem;
+        .subnav-btn {
+          font-size: 0.85rem;
+          min-width: 28px;
+          padding: 3px 0;
         }
       }
     </style>
@@ -161,7 +175,7 @@
       <option value="">카테고리를 선택하세요</option>
     </select>
     <div id="subnav" class="subnav"></div>
-    <div id="practice-area" class="verse-container"></div>
+    <div id="practice-area"></div>
 
     <script>
       const verses = [
@@ -220,6 +234,7 @@
         const subnav = document.getElementById("subnav");
         subnav.innerHTML = "";
         if (!currentCategory) return;
+
         const filtered = verses.filter((v) => v.cat === currentCategory);
         filtered.forEach((v, idx) => {
           const btn = document.createElement("button");
@@ -237,81 +252,71 @@
       function renderVerse() {
         const area = document.getElementById("practice-area");
         area.innerHTML = "";
+
         if (!currentCategory) return;
+
         const filtered = verses.filter((v) => v.cat === currentCategory);
         const verse = filtered[currentVerseIndex];
         if (!verse) return;
 
-        area.innerHTML = `
-  <div class="verse-label" style="display:flex; width:100%; gap:5px; align-items:center;">
-    <span class="ref-text" style="flex:1; text-align:left;">${verse.ref}</span>
-    <span style="flex:1;"></span> <!-- 빈칸 -->
-    <span id="status-${verse.ref}" class="status" style="flex:1; text-align:center;"></span>
-    <button id="btn-${verse.ref}" style="flex:1;">확인</button>
-    <button id="clean-${verse.ref}" style="flex:1;">초기화</button>
-  </div>
-  <textarea id="input-${verse.ref}" placeholder="직접 입력해보세요..."></textarea>
-  <div id="result-${verse.ref}" class="result"></div>
-  <div id="original-${verse.ref}" class="original-text" style="display:none;"></div>
-  `;
+        const div = document.createElement("div");
+        div.className = "verse-container";
+        div.innerHTML = `
+          <div class="verse-label">
+            <span class="ref-text">${verse.ref}</span>
+            <span></span>
+            <span id="status-${verse.ref}" class="status"></span>
+            <button id="btn-${verse.ref}">확인</button>
+            <button id="clean-${verse.ref}">초기화</button>
+          </div>
+          <textarea id="input-${verse.ref}" placeholder="직접 입력해보세요..."></textarea>
+          <div id="result-${verse.ref}" class="result"></div>
+          <div id="original-${verse.ref}" class="original-text"></div>
+        `;
+        area.appendChild(div);
 
         const textarea = document.getElementById(`input-${verse.ref}`);
         const checkBtn = document.getElementById(`btn-${verse.ref}`);
         const cleanBtn = document.getElementById(`clean-${verse.ref}`);
+        const status = document.getElementById(`status-${verse.ref}`);
+        const originalDiv = document.getElementById(`original-${verse.ref}`);
+        const resultDiv = document.getElementById(`result-${verse.ref}`);
 
-        checkBtn.onclick = () => checkVerse(verse.ref, verse.text);
-        cleanBtn.onclick = () => cleanVerse(verse.ref);
+        checkBtn.onclick = () => {
+          const original = verse.text.replace(/\s+/g, "");
+          const userInput = textarea.value.replace(/\s+/g, "");
+          let correct = userInput === original;
+          status.textContent = correct ? "정답" : "오답";
+          status.style.color = correct ? "green" : "red";
+
+          // 차이 표시
+          let result = "";
+          const maxLen = Math.max(original.length, userInput.length);
+          for (let i = 0; i < maxLen; i++) {
+            if (original[i] !== userInput[i]) {
+              result += `<span class="diff">${userInput[i] || ""}</span>`;
+            } else {
+              result += userInput[i] || "";
+            }
+          }
+          resultDiv.innerHTML = result || "<span style='color:#999;'>입력 내용이 없습니다.</span>";
+          originalDiv.textContent = verse.text;
+          originalDiv.style.display = "block";
+        };
+
+        cleanBtn.onclick = () => {
+          textarea.value = "";
+          resultDiv.innerHTML = "";
+          originalDiv.style.display = "none";
+          status.textContent = "";
+        };
+
         textarea.addEventListener("keydown", (e) => {
           if (e.key === "Enter") {
             e.preventDefault();
-            checkVerse(verse.ref, verse.text);
+            checkBtn.click();
           }
         });
-      }
-
-      function checkVerse(ref, originalText) {
-        const original = originalText.replace(/\s+/g, "");
-        const userInput = document.getElementById(`input-${ref}`).value.replace(/\s+/g, "");
-        const resultDiv = document.getElementById(`result-${ref}`);
-        const originalDiv = document.getElementById(`original-${ref}`);
-        const statusSpan = document.getElementById(`status-${ref}`);
-
-        let result = "";
-        const maxLen = Math.max(original.length, userInput.length);
-        for (let i = 0; i < maxLen; i++) {
-          if (original[i] !== userInput[i]) {
-            result += `<span class="diff">${userInput[i] || ""}</span>`;
-          } else {
-            result += userInput[i] || "";
-          }
-        }
-        resultDiv.innerHTML = result || "<span style='color:#999;'>입력 내용이 없습니다.</span>";
-
-        originalDiv.textContent = originalText;
-        originalDiv.style.display = "block";
-
-        if (userInput === original && userInput.length > 0) {
-          statusSpan.textContent = "정답 ✅";
-          statusSpan.className = "status correct";
-        } else if (userInput.length > 0) {
-          statusSpan.textContent = "오답 ❌";
-          statusSpan.className = "status wrong";
-        } else {
-          statusSpan.textContent = "";
-          statusSpan.className = "status";
-        }
-      }
-
-      function cleanVerse(ref) {
-        const textarea = document.getElementById(`input-${ref}`);
-        const resultDiv = document.getElementById(`result-${ref}`);
-        const originalDiv = document.getElementById(`original-${ref}`);
-        const statusSpan = document.getElementById(`status-${ref}`);
-        textarea.value = "";
-        resultDiv.innerHTML = "";
-        originalDiv.textContent = "";
-        originalDiv.style.display = "none";
-        statusSpan.textContent = "";
       }
 
       initCategorySelect();
