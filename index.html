@@ -4,103 +4,111 @@
     <meta charset="UTF-8" />
     <title>일대일양육 암송구절</title>
     <style>
+      html,
       body {
+        margin: 0;
+        padding: 0;
         font-family: "Noto Sans KR", sans-serif;
         background: #f6f6f6;
-        padding: 20px;
-        font-size: 1.2rem; /* 기본 폰트 약간 증가 */
+        width: 100%;
+        height: 100%;
+      }
+      body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 0;
+        font-size: 1.2rem;
       }
       h1 {
-        font-size: 2rem; /* 제목 확대 */
-        margin-bottom: 20px;
+        font-size: 2.2rem;
+        margin: 10px 0;
         text-align: center;
+        padding: 0 10px;
       }
-
-      /* --- 카테고리 드롭다운 --- */
       #category-select {
-        display: block;
-        width: 100%;
-        max-width: 600px;
-        margin: 0 auto 20px;
+        width: 90%;
         padding: 12px;
-        font-size: 1.4rem; /* 2배 확대 */
+        font-size: 1.8rem;
         border-radius: 8px;
-        border: 1px solid #ccc;
-        background-color: white;
+        margin-bottom: 10px;
       }
-
-      /* --- 1,2,3 번호 버튼 --- */
       .subnav {
         display: flex;
         justify-content: center;
         flex-wrap: nowrap;
         overflow-x: auto;
-        gap: 6px;
-        margin-bottom: 15px;
+        gap: 8px;
+        margin-bottom: 10px;
+        width: 90%;
       }
       .subnav-btn {
-        min-width: 50px; /* 버튼 폭 확대 */
-        padding: 10px 0; /* 세로 패딩 확대 */
+        flex: 0 0 auto;
+        min-width: 60px;
+        padding: 14px 0;
+        font-size: 1.8rem;
         background-color: #ddd;
         border: none;
-        border-radius: 6px;
+        border-radius: 8px;
         cursor: pointer;
-        font-size: 1.5rem; /* 2배 이상 확대 */
-        transition: background 0.2s;
-        flex: 0 0 auto;
+        transition: 0.2s;
       }
       .subnav-btn.active,
       .subnav-btn:hover {
         background-color: #0084ff;
         color: #fff;
       }
-
-      /* --- 구절 영역 --- */
       .verse-container {
-        background: white;
-        padding: 20px;
+        background: #fff;
+        width: 95%;
+        flex: 1;
+        margin: 0 auto 10px;
+        padding: 15px;
         border-radius: 12px;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.15);
-        margin-bottom: 30px;
-        max-width: 600px;
-        margin-left: auto;
-        margin-right: auto;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        display: flex;
+        flex-direction: column;
       }
       .verse-label {
         font-weight: bold;
-        margin-bottom: 12px;
-        color: #333;
-        font-size: 1.6rem; /* 확대 */
+        font-size: 2rem;
+        margin-bottom: 10px;
       }
       textarea {
-        width: 100%; /* verse-container 안쪽 폭에 맞춤 */
-        max-width: 100%; /* 부모 박스 벗어나지 않도록 */
-        height: 300px; /* 이전보다 1.5배 늘림 (기존 200px 기준) */
-        padding: 15px;
-        font-size: 1.8rem;
-        margin-bottom: 12px;
+        width: 100%;
+        flex: 1; /* 가용 공간 채우기 */
+        font-size: 2rem;
+        padding: 12px;
         line-height: 1.6;
-        box-sizing: border-box; /* 패딩 포함해서 width 계산 */
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        resize: none;
+        box-sizing: border-box;
       }
-
+      .button-group {
+        display: flex;
+        gap: 10px;
+        margin-top: 10px;
+        flex-wrap: wrap;
+      }
       button {
-        padding: 12px 24px;
-        font-size: 1.5rem; /* 확대 */
-        background: #0084ff;
-        color: white;
+        flex: 1;
+        font-size: 1.8rem;
+        padding: 12px 0;
+        border-radius: 8px;
         border: none;
-        border-radius: 6px;
+        background: #0084ff;
+        color: #fff;
         cursor: pointer;
-        margin-right: 10px;
       }
       button:hover {
         background: #006edc;
       }
-
       .result-status {
-        display: inline-block;
+        font-size: 2rem;
         font-weight: bold;
-        font-size: 1.5rem;
+        margin-left: 10px;
+        align-self: center;
       }
       .result-status.correct {
         color: green;
@@ -108,46 +116,43 @@
       .result-status.wrong {
         color: red;
       }
-
-      .result {
-        margin-top: 12px;
-        white-space: pre-wrap;
-        font-size: 1.4rem;
+      .result,
+      .original-text {
+        font-size: 1.8rem;
+        margin-top: 10px;
+        word-break: break-word;
       }
       .diff {
         background-color: #ffcccc;
       }
-      .original-text {
-        margin-top: 10px;
-        font-size: 1.4rem;
-        color: #222;
-        border-top: 1px solid #ddd;
-        padding-top: 10px;
-        font-weight: bold;
-        white-space: pre-wrap;
-      }
-
       @media (max-width: 600px) {
-        body {
-          font-size: 1.4rem;
-          padding: 15px;
+        h1 {
+          font-size: 2.4rem;
         }
-        textarea {
-          height: 330px; /* 모바일에서 1.5배 적용 */
+        #category-select {
           font-size: 2rem;
         }
         .subnav-btn {
-          min-width: 60px;
-          font-size: 1.8rem;
-          padding: 12px 0;
+          font-size: 2rem;
+          min-width: 70px;
+          padding: 16px 0;
+        }
+        .verse-label {
+          font-size: 2.2rem;
+        }
+        textarea {
+          font-size: 2.2rem;
         }
         button {
-          font-size: 1.8rem;
-          padding: 14px 28px;
+          font-size: 2rem;
+          padding: 14px 0;
         }
-        #category-select {
-          font-size: 1.8rem;
-          padding: 14px;
+        .result,
+        .original-text {
+          font-size: 2rem;
+        }
+        .result-status {
+          font-size: 2.2rem;
         }
       }
     </style>
@@ -157,7 +162,7 @@
       <option value="">카테고리를 선택하세요</option>
     </select>
     <div id="subnav" class="subnav"></div>
-    <div id="practice-area"></div>
+    <div id="practice-area" class="verse-container"></div>
 
     <script>
       const verses = [
@@ -204,7 +209,6 @@
           opt.textContent = cat;
           select.appendChild(opt);
         });
-
         select.addEventListener("change", (e) => {
           currentCategory = e.target.value;
           currentVerseIndex = 0;
@@ -217,7 +221,6 @@
         const subnav = document.getElementById("subnav");
         subnav.innerHTML = "";
         if (!currentCategory) return;
-
         const filtered = verses.filter((v) => v.cat === currentCategory);
         filtered.forEach((v, idx) => {
           const btn = document.createElement("button");
@@ -235,27 +238,22 @@
       function renderVerse() {
         const area = document.getElementById("practice-area");
         area.innerHTML = "";
-
         if (!currentCategory) return;
-
         const filtered = verses.filter((v) => v.cat === currentCategory);
         const verse = filtered[currentVerseIndex];
         if (!verse) return;
 
-        const div = document.createElement("div");
-        div.className = "verse-container";
-        div.innerHTML = `
-          <div class="verse-label">${verse.ref}</div>
-          <textarea id="input-${verse.ref}" placeholder="직접 입력해보세요..."></textarea>
-          <div class="button-group">
-            <button id="btn-${verse.ref}">확인</button>
-            <button id="clean-${verse.ref}">초기화</button>
-            <span id="status-${verse.ref}" class="result-status"></span>
-          </div>
-          <div id="result-${verse.ref}" class="result"></div>
-          <div id="original-${verse.ref}" class="original-text" style="display:none;"></div>
-        `;
-        area.appendChild(div);
+        area.innerHTML = `
+    <div class="verse-label">${verse.ref}</div>
+    <textarea id="input-${verse.ref}" placeholder="직접 입력해보세요..."></textarea>
+    <div class="button-group">
+      <button id="btn-${verse.ref}">확인</button>
+      <button id="clean-${verse.ref}">초기화</button>
+      <span id="status-${verse.ref}" class="result-status"></span>
+    </div>
+    <div id="result-${verse.ref}" class="result"></div>
+    <div id="original-${verse.ref}" class="original-text" style="display:none;"></div>
+  `;
 
         const textarea = document.getElementById(`input-${verse.ref}`);
         const checkBtn = document.getElementById(`btn-${verse.ref}`);
@@ -263,7 +261,6 @@
 
         checkBtn.onclick = () => checkVerse(verse.ref, verse.text);
         cleanBtn.onclick = () => cleanVerse(verse.ref);
-
         textarea.addEventListener("keydown", (e) => {
           if (e.key === "Enter") {
             e.preventDefault();
@@ -310,7 +307,6 @@
         const resultDiv = document.getElementById(`result-${ref}`);
         const originalDiv = document.getElementById(`original-${ref}`);
         const statusSpan = document.getElementById(`status-${ref}`);
-
         textarea.value = "";
         resultDiv.innerHTML = "";
         originalDiv.textContent = "";
