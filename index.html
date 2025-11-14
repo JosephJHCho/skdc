@@ -218,14 +218,18 @@
           height: 160px;
         }
         #category-select {
-          height: 75px;
+          height: 120px;
+        }
+        #category-select::before,
+        #category-select::after {
+          height: 40px;
         }
         .category-item {
-          font-size: 0.95rem;
-          height: 25px;
+          font-size: 1rem;
+          height: 40px;
         }
         .category-item.selected {
-          font-size: 1rem;
+          font-size: 1.15rem;
         }
         .subnav-btn {
           font-size: 0.85rem;
@@ -352,10 +356,9 @@
           if (e.target.classList.contains("category-item")) {
             const item = e.target;
             const itemTop = item.offsetTop;
-            const wheelTop = wheel.scrollTop;
-            const itemCenter = itemTop - wheelTop + 15; // 30px / 2
+            const itemHeight = item.offsetHeight;
             const wheelCenter = wheel.clientHeight / 2;
-            const scrollTo = itemTop - wheelCenter + 15;
+            const scrollTo = itemTop - wheelCenter + (itemHeight / 2);
             
             isScrolling = true;
             wheel.scrollTo({
@@ -380,7 +383,8 @@
 
           items.forEach((item) => {
             const itemTop = item.offsetTop;
-            const itemCenter = itemTop - wheelScrollTop + 15; // 30px / 2
+            const itemHeight = item.offsetHeight;
+            const itemCenter = itemTop - wheelScrollTop + (itemHeight / 2);
             const distance = Math.abs(itemCenter - wheelCenter);
 
             if (distance < minDistance) {
@@ -410,7 +414,8 @@
         setTimeout(() => {
           const firstItem = wheel.querySelector(".category-item");
           if (firstItem) {
-            wheel.scrollTop = firstItem.offsetTop - (wheel.clientHeight / 2) + 15;
+            const itemHeight = firstItem.offsetHeight;
+            wheel.scrollTop = firstItem.offsetTop - (wheel.clientHeight / 2) + (itemHeight / 2);
           }
         }, 50);
       }
