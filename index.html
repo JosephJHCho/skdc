@@ -59,6 +59,8 @@
         scroll-snap-type: y mandatory;
         scrollbar-width: none;
         -ms-overflow-style: none;
+        -webkit-overflow-scrolling: touch;
+        touch-action: pan-y;
       }
 
       .category-wheel::-webkit-scrollbar {
@@ -331,25 +333,141 @@
           }
         });
 
-        // 터치 이벤트 (모바일)
+        // 터치 이벤트 (모바일) - 개선된 스와이프 제스처
         let touchStartY = 0;
+        let touchStartTime = 0;
+        let touchStartScrollTop = 0;
+        let isTouching = false;
+        let velocity = 0;
+        let lastTouchY = 0;
+        let lastTouchTime = 0;
+        let momentumAnimation = null;
+
         wheel.addEventListener("touchstart", (e) => {
+          isTouching = true;
           touchStartY = e.touches[0].clientY;
-        });
+          touchStartTime = Date.now();
+          touchStartScrollTop = wheel.scrollTop;
+          lastTouchY = touchStartY;
+          lastTouchTime = touchStartTime;
+          velocity = 0;
+          
+          // 기존 관성 애니메이션 취소
+          if (momentumAnimation) {
+            cancelAnimationFrame(momentumAnimation);
+            momentumAnimation = null;
+          }
+        }, { passive: true });
 
         wheel.addEventListener("touchmove", (e) => {
+          if (!isTouching) return;
+          
           e.preventDefault();
           const touchY = e.touches[0].clientY;
+          const currentTime = Date.now();
+          
+          // 속도 계산
+          if (lastTouchTime > 0) {
+            const timeDelta = currentTime - lastTouchTime;
+            const distanceDelta = lastTouchY - touchY;
+            if (timeDelta > 0) {
+              velocity = distanceDelta / timeDelta;
+            }
+          }
+          
           const delta = touchStartY - touchY;
-          wheel.scrollTop += delta;
-          touchStartY = touchY;
-        });
+          wheel.scrollTop = touchStartScrollTop + delta;
+          
+          lastTouchY = touchY;
+          lastTouchTime = currentTime;
+        }, { passive: false });
 
-        wheel.addEventListener("touchend", () => {
-          setTimeout(() => {
-            updateSelectedCategory();
-          }, 100);
-        });
+        wheel.addEventListener("touchend", (e) => {
+          if (!isTouching) return;
+          isTouching = false;
+          
+          const touchEndTime = Date.now();
+          const touchDuration = touchEndTime - touchStartTime;
+          const touchDistance = touchStartY - lastTouchY;
+          
+          // 빠른 스와이프 감지 (관성 스크롤)
+          if (touchDuration < 300 && Math.abs(touchDistance) > 10) {
+            const itemHeight = wheel.querySelector(".category-item")?.offsetHeight || 40;
+            const momentum = velocity * 200; // 관성 배율
+            
+            let targetScroll = wheel.scrollTop + momentum;
+            const maxScroll = wheel.scrollHeight - wheel.clientHeight;
+            targetScroll = Math.max(0, Math.min(targetScroll, maxScroll));
+            
+            // 부드러운 관성 스크롤
+            const startScroll = wheel.scrollTop;
+            const distance = targetScroll - startScroll;
+            const duration = Math.min(500, Math.abs(distance) * 2);
+            const startTime = Date.now();
+            
+            function animate() {
+              const elapsed = Date.now() - startTime;
+              const progress = Math.min(elapsed / duration, 1);
+              // ease-out 함수
+              const easeProgress = 1 - Math.pow(1 - progress, 3);
+              
+              wheel.scrollTop = startScroll + (distance * easeProgress);
+              
+              if (progress < 1) {
+                momentumAnimation = requestAnimationFrame(animate);
+              } else {
+                // 스크롤 완료 후 가장 가까운 항목으로 스냅
+                snapToNearestItem();
+              }
+            }
+            
+            momentumAnimation = requestAnimationFrame(animate);
+          } else {
+            // 느린 스와이프나 탭의 경우 바로 스냅
+            setTimeout(() => {
+              snapToNearestItem();
+            }, 100);
+          }
+        }, { passive: true });
+
+        // 가장 가까운 항목으로 스냅하는 함수
+        function snapToNearestItem() {
+          const items = wheel.querySelectorAll(".category-item");
+          const wheelCenter = wheel.clientHeight / 2;
+          const wheelScrollTop = wheel.scrollTop;
+          
+          let nearestItem = null;
+          let minDistance = Infinity;
+
+          items.forEach((item) => {
+            const itemTop = item.offsetTop;
+            const itemHeight = item.offsetHeight;
+            const itemCenter = itemTop - wheelScrollTop + (itemHeight / 2);
+            const distance = Math.abs(itemCenter - wheelCenter);
+
+            if (distance < minDistance) {
+              minDistance = distance;
+              nearestItem = item;
+            }
+          });
+
+          if (nearestItem) {
+            const itemTop = nearestItem.offsetTop;
+            const itemHeight = nearestItem.offsetHeight;
+            const targetScroll = itemTop - wheelCenter + (itemHeight / 2);
+            
+            isScrolling = true;
+            wheel.scrollTo({
+              top: targetScroll,
+              behavior: "smooth"
+            });
+            
+            setTimeout(() => {
+              updateSelectedCategory();
+              isScrolling = false;
+            }, 300);
+          }
+        }
 
         // 클릭 이벤트
         wheel.addEventListener("click", (e) => {
