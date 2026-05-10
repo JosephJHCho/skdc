@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+    <title>일대일양육 암송구절</title>
+    <style>
+      body {
+        font-family: "Noto Sans KR", sans-serif;
+        background: #f6f6f6;
+        padding: 10px;
+        font-size: 1rem;
+      }
+
+      h1 {
+        font-size: 1.5rem;
+        text-align: center;
+        margin-bottom: 10px;
+      }
+
+      /* --- 카테고리 휠 피커 --- */
+      #category-select {
+        display: block;
+        width: 100%;
+        max-width: 600px;
+        margin: 0 auto 5px;
+        height: 90px;
+        overflow: hidden;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        background-color: white;
+        position: relative;
+      }
+
+      #category-select::before,
+      #category-select::after {
+        content: '';
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 30px;
+        pointer-events: none;
+        z-index: 1;
+      }
+
+      #category-select::before {
+        top: 0;
+        background: linear-gradient(to bottom, white, rgba(255, 255, 255, 0));
+      }
+
+      #category-select::after {
+        bottom: 0;
+        background: linear-gradient(to top, white, rgba(255, 255, 255, 0));
+      }
+
+      .category-wheel {
+        height: 100%;
+        overflow-y: auto;
+        scroll-snap-type: y mandatory;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+        -webkit-overflow-scrolling: touch;
+        touch-action: pan-y;
+      }
+
+      .category-wheel::-webkit-scrollbar {
+        display: none;
+      }
+
+      .category-item {
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 0 10px;
+        scroll-snap-align: center;
+        scroll-snap-stop: always;
+        font-size: 1rem;
+        color: #999;
+        transition: all 0.2s ease;
+        cursor: pointer;
+      }
+
+      .category-item.selected {
+        color: #000;
+        font-weight: bold;
+        font-size: 1.1rem;
+      }
+
+      .category-item.empty {
+        color: #999;
+        font-style: italic;
+      }
+
+      /* --- 1,2,3 번호 버튼 --- */
+      .subnav {
+        display: flex;
+        justify-content: center;
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        gap: 4px;
+        margin-bottom: 5px;
+      }
+      .subnav-btn {
+        min-width: 30px;
+        padding: 4px 0;
+        background-color: #ddd;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        flex: 0 0 auto;
+      }
+      .subnav-btn.active,
+      .subnav-btn:hover {
+        background-color: #0084ff;
+        color: #fff;
+      }
+
+      /* --- 구절 영역 --- */
+      .verse-container {
+        background: white;
+        padding: 10px;
+        border-radius: 8px;
+        box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+        margin-bottom: 15px;
+        width: 100%;
+        max-width: 600px;
+        margin-left: auto;
+        margin-right: auto;
+        box-sizing: border-box;
+      }
+
+      .verse-label {
+        display: flex;
+        width: 100%;
+        gap: 4px;
+        align-items: center;
+        margin-bottom: 6px;
+        font-size: 1.2rem;
+      }
+
+      .verse-label span,
+      .verse-label button {
+        flex: 1;
+        text-align: center;
+        font-size: 1.2rem;
+        white-space: nowrap;
+        padding: 6px 4px;
+        border-radius: 4px;
+        border: none;
+        cursor: pointer;
+      }
+
+      .verse-label button#btn-check {
+        background-color: #0084ff;
+        color: white;
+      }
+
+      .verse-label button#btn-clean {
+        background-color: #888;
+        color: white;
+      }
+
+      textarea {
+        width: 100%;
+        height: 180px;
+        padding: 8px;
+        font-size: 1.2rem;
+        line-height: 1.4;
+        margin-bottom: 5px;
+        box-sizing: border-box;
+      }
+
+      .result {
+        font-size: 1.1rem;
+        white-space: pre-wrap;
+        margin-bottom: 4px;
+      }
+
+      .diff {
+        background-color: #ffcccc;
+      }
+
+      .original-text {
+        display: none;
+        font-size: 1.1rem;
+        font-weight: bold;
+        margin-top: 4px;
+        border-top: 1px solid #ddd;
+        padding-top: 4px;
+        white-space: pre-wrap;
+      }
+
+      .status {
+        font-weight: bold;
+      }
+
+      button {
+        cursor: pointer;
+        border-radius: 4px;
+        border: none;
+        padding: 6px 0;
+      }
+
+      button:hover {
+        opacity: 0.9;
+      }
+
+      @media (max-width: 600px) {
+        .verse-label {
+          font-size: 1rem;
+        }
+        .verse-label button,
+        .verse-label span {
+          font-size: 1rem;
+        }
+        textarea {
+          font-size: 1rem;
+          height: 160px;
+        }
+        #category-select {
+          height: 120px;
+        }
+        #category-select::before,
+        #category-select::after {
+          height: 40px;
+        }
+        .category-item {
+          font-size: 1rem;
+          height: 40px;
+        }
+        .category-item.selected {
+          font-size: 1.15rem;
+        }
+        .subnav-btn {
+          font-size: 0.85rem;
+          min-width: 28px;
+          padding: 3px 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div id="category-select">
+      <div class="category-wheel" id="category-wheel"></div>
+    </div>
+    <div id="subnav" class="subnav"></div>
+    <div id="practice-area"></div>
+
+    <script>
+      const verses = [
+        { ref: "시1:3", text: "그는 시냇가에 심은 나무가 철을 따라 열매를 맺으며 그 잎사귀가 마르지 아니함 같으니 그가 하는 모든 일이 다 형통하리로다", cat: "하나님의 관심" },
+        { ref: "요10:10", text: "도둑이 오는 것은 도둑질하고 죽이고 멸망시키려는 것뿐이요 내가 온 것은 양으로 생명을 얻게 하고 더 풍성히 얻게 하려는 것이라", cat: "하나님의 관심" },
+        { ref: "렘2:13", text: "내 백성이 두 가지 악을 행하였나니 곧 그들이 생수의 근원되는 나를 버린 것과 스스로 웅덩이를 판 것인데 그것은 그 물을 가두지 못할 터진 웅덩이들이니라", cat: "인간의 상태" },
+        { ref: "롬3:23", text: "모든 사람이 죄를 범하였으매 하나님의 영광에 이르지 못하더니", cat: "인간의 상태" },
+        { ref: "롬5:8", text: "우리가 아직 죄인 되었을 때에 그리스도께서 우리를 위하여 죽으심으로 하나님께서 우리에 대한 자기의 사랑을 확증하셨느니라", cat: "하나님의 해결" },
+        { ref: "요일5:11-12", text: "또 증거는 이것이니 하나님이 우리에게 영생을 주신 것과 이 생명이 그의 아들 안에 있는 그것이니라 아들이 있는 자에게는 생명이 있고 하나님의 아들이 없는 자에게는 생명이 없느니라", cat: "인간의 책임" },
+        { ref: "요1:12", text: "영접하는 자 곧 그 이름을 믿는 자들에게는 하나님의 자녀가 되는 권세를 주셨으니", cat: "인간의 책임" },
+        { ref: "요5:24", text: "내가 진실로 진실로 너희에게 이르노니 내 말을 듣고 또 나 보내신 이를 믿는 자는 영생을 얻었고 심판에 이르지 아니하나니 사망에서 생명으로 옮겼느니라", cat: "새로운 삶" },
+        { ref: "마16:16", text: "시몬 베드로가 대답하여 이르되 주는 그리스도시요 살아 계신 하나님의 아들이시니이다", cat: "예수 그리스도 | 2. 예수님은 어떤 분입니까" },
+        { ref: "갈2:20", text: "내가 그리스도와 함께 십자가에 못 박혔나니 그런즉 이제는 내가 사는 것이 아니요 오직 내 안에 그리스도께서 사시는 것이라 이제 내가 육체 가운데 사는 것은 나를 사랑하사 나를 위하여 자기 자신을 버리신 하나님의 아들을 믿는 믿음 안에서 사는 것이라", cat: "예수 그리스도 | 3. 예수님은 어떤 일을 하셨습니까" },
+        { ref: "엡2:8-9", text: "너희는 그 은혜에 의하여 믿음으로 말미암아 구원을 받았으니 이것은 너희에게서 난 것이 아니요 하나님의 선물이라 행위에서 난 것이 아니니 이는 누구든지 자랑하지 못하게 함이라", cat: "예수 그리스도 | 4. 예수님은 지금 무엇을 하고 계십니까" },
+        { ref: "롬10:9-10", text: "네가 만일 네 입으로 예수를 주로 시인하며 또 하나님께서 그를 죽은 자 가운데서 살리신 것을 네 마음에 믿으면 구원을 받으리라 사람이 마음으로 믿어 의에 이르고 입으로 시인하여 구원에 이르느니라", cat: "예수 그리스도 | 5. 예수님을 믿으십시오" },
+        { ref: "벧전2:2", text: "갓난 아기들 같이 순전하고 신령한 젖을 사모하라 이는 그로 말미암아 너희로 구원에 이르도록 자라게 하려 함이라", cat: "QT(Quiet Time) | 6. QT. 하나님과 교제하는 시간" },
+        { ref: "요5:24", text: "내가 진실로 진실로 너희에게 이르노니 내 말을 듣고 또 나 보내신 이를 믿는 자는 영생을 얻었고 심판에 이르지 아니하나니 사망에서 생명으로 옮겼느니라", cat: "구원의 확신과 하나님의 성품 | 7. 구원의 확신" },
+        { ref: "대상29:11", text: "여호와여 위대하심과 권능과 영광과 승리와 위엄이 다 주께 속하였사오니 천지에 있는 것이 다 주의 것이로소이다 여호와여 주권도 주께 속하였사오니 주는 높으사 만물의 머리이심이니이다", cat: "구원의 확신과 하나님의 성품 | 8. 하나님의 성품" },
+        { ref: "딤후3:16", text: "모든 성경은 하나님의 감동으로 된 것으로 교훈과 책망과 바르게 함과 의로 교육하기에 유익하니", cat: "그리스도인의 생활 | 성경" },
+        { ref: "빌4:6-7", text: "아무 것도 염려하지 말고 다만 모든 일에 기도와 간구로 너희 구할 것을 감사함으로 하나님께 아뢰라 그리하면 모든 지각에 뛰어난 하나님의 평강이 그리스도 예수 안에서 너희 마음과 생각을 지키시리라", cat: "그리스도인의 생활 | 기도" },
+        { ref: "요13:34-35", text: "새 계명을 너희에게 주노니 서로 사랑하라 내가 너희를 사랑한 것 같이 너희도 서로 사랑하라 너희가 서로 사랑하면 이로써 모든 사람이 너희가 내 제자인 줄 알리라", cat: "그리스도인의 생활 | 교제" },
+        { ref: "롬1:16", text: "내가 복음을 부끄러워하지 아니하노니 이 복음은 모든 믿는 자에게 구원을 주시는 하나님의 능력이 됨이라 먼저는 유대인에게요 그리고 헬라인에게로다", cat: "그리스도인의 생활 | 전도" },
+        { ref: "엡5:18", text: "술 취하지 말라 이는 방탕한 것이니 오직 성령으로 충만함을 받으라", cat: "그리스도가 다스리는 삶 | 성령 충만한 삶" },
+        { ref: "고전10:13", text: "사람이 감당할 시험 밖에는 너희가 당한 것이 없나니 오직 하나님은 미쁘사 너희가 감당하지 못할 시험 당함을 허락하지 아니하시고 시험 당할 즈음에 또한 피할 길을 내사 너희로 능히 감당하게 하시느니라", cat: "그리스도가 다스리는 삶 | 시험을 이기는 삶" },
+        { ref: "눅9:23", text: "또 무리에게 이르시되 아무든지 나를 따라오려거든 자기를 부인하고 날마다 제 십자가를 지고 나를 따를 것이니라", cat: "그리스도가 다스리는 삶 | 순종하는 삶" },
+        { ref: "벧전2:9", text: "그러나 너희는 택하신 족속이요 왕 같은 제사장들이요 거룩한 나라요 그의 소유가 된 백성이니 이는 너희를 어두운 데서 불러 내어 그의 기이한 빛에 들어가게 하신 이의 아름다운 덕을 선포하게 하려 하심이라", cat: "그리스도가 다스리는 삶 | 사역하는 삶" },
+      ];
+
+      const categories = [...new Set(verses.map((v) => v.cat))];
+      let currentCategory = "";
+      let currentVerseIndex = 0;
+
+      function initCategorySelect() {
+        const wheel = document.getElementById("category-wheel");
+
+        // 빈 옵션 추가
+        const emptyItem = document.createElement("div");
+        emptyItem.className = "category-item empty";
+        emptyItem.textContent = "-";
+        emptyItem.dataset.value = "";
+        wheel.appendChild(emptyItem);
+
+        // 카테고리 항목 추가
+        categories.forEach((cat) => {
+          const item = document.createElement("div");
+          item.className = "category-item";
+          item.textContent = cat;
+          item.dataset.value = cat;
+          wheel.appendChild(item);
+        });
+
+        // 마지막에 빈 옵션 추가
+        const emptyItemEnd = document.createElement("div");
+        emptyItemEnd.className = "category-item empty";
+        emptyItemEnd.textContent = "-";
+        emptyItemEnd.dataset.value = "";
+        wheel.appendChild(emptyItemEnd);
+
+        // 휠 이벤트 처리
+        let isScrolling = false;
+        wheel.addEventListener("wheel", (e) => {
+          e.preventDefault();
+          if (isScrolling) return;
+
+          const delta = e.deltaY > 0 ? 30 : -30;
+          wheel.scrollTop += delta;
+
+          // 스크롤 후 선택 업데이트
+          setTimeout(() => {
+            updateSelectedCategory();
+          }, 100);
+        });
+
+        // 스크롤 이벤트로 선택 업데이트
+        wheel.addEventListener("scroll", () => {
+          if (!isScrolling) {
+            updateSelectedCategory();
+          }
+        });
+
+        // 터치 이벤트 (모바일) - 개선된 스와이프 제스처
+        let touchStartY = 0;
+        let touchStartTime = 0;
+        let touchStartScrollTop = 0;
+        let isTouching = false;
+        let velocity = 0;
+        let lastTouchY = 0;
+        let lastTouchTime = 0;
+        let momentumAnimation = null;
+
+        wheel.addEventListener("touchstart", (e) => {
+          isTouching = true;
+          touchStartY = e.touches[0].clientY;
+          touchStartTime = Date.now();
+          touchStartScrollTop = wheel.scrollTop;
+          lastTouchY = touchStartY;
+          lastTouchTime = touchStartTime;
+          velocity = 0;
+          
+          // 기존 관성 애니메이션 취소
+          if (momentumAnimation) {
+            cancelAnimationFrame(momentumAnimation);
+            momentumAnimation = null;
+          }
+        }, { passive: true });
+
+        wheel.addEventListener("touchmove", (e) => {
+          if (!isTouching) return;
+          
+          e.preventDefault();
+          const touchY = e.touches[0].clientY;
+          const currentTime = Date.now();
+          
+          // 속도 계산
+          if (lastTouchTime > 0) {
+            const timeDelta = currentTime - lastTouchTime;
+            const distanceDelta = lastTouchY - touchY;
+            if (timeDelta > 0) {
+              velocity = distanceDelta / timeDelta;
+            }
+          }
+          
+          const delta = touchStartY - touchY;
+          wheel.scrollTop = touchStartScrollTop + delta;
+          
+          lastTouchY = touchY;
+          lastTouchTime = currentTime;
+        }, { passive: false });
+
+        wheel.addEventListener("touchend", (e) => {
+          if (!isTouching) return;
+          isTouching = false;
+          
+          const touchEndTime = Date.now();
+          const touchDuration = touchEndTime - touchStartTime;
+          const touchDistance = touchStartY - lastTouchY;
+          
+          // 빠른 스와이프 감지 (관성 스크롤)
+          if (touchDuration < 300 && Math.abs(touchDistance) > 10) {
+            const itemHeight = wheel.querySelector(".category-item")?.offsetHeight || 40;
+            const momentum = velocity * 200; // 관성 배율
+            
+            let targetScroll = wheel.scrollTop + momentum;
+            const maxScroll = wheel.scrollHeight - wheel.clientHeight;
+            targetScroll = Math.max(0, Math.min(targetScroll, maxScroll));
+            
+            // 부드러운 관성 스크롤
+            const startScroll = wheel.scrollTop;
+            const distance = targetScroll - startScroll;
+            const duration = Math.min(500, Math.abs(distance) * 2);
+            const startTime = Date.now();
+            
+            function animate() {
+              const elapsed = Date.now() - startTime;
+              const progress = Math.min(elapsed / duration, 1);
+              // ease-out 함수
+              const easeProgress = 1 - Math.pow(1 - progress, 3);
+              
+              wheel.scrollTop = startScroll + (distance * easeProgress);
+              
+              if (progress < 1) {
+                momentumAnimation = requestAnimationFrame(animate);
+              } else {
+                // 스크롤 완료 후 가장 가까운 항목으로 스냅
+                snapToNearestItem();
+              }
+            }
+            
+            momentumAnimation = requestAnimationFrame(animate);
+          } else {
+            // 느린 스와이프나 탭의 경우 바로 스냅
+            setTimeout(() => {
+              snapToNearestItem();
+            }, 100);
+          }
+        }, { passive: true });
+
+        // 가장 가까운 항목으로 스냅하는 함수
+        function snapToNearestItem() {
+          const items = wheel.querySelectorAll(".category-item");
+          const wheelCenter = wheel.clientHeight / 2;
+          const wheelScrollTop = wheel.scrollTop;
+          
+          let nearestItem = null;
+          let minDistance = Infinity;
+
+          items.forEach((item) => {
+            const itemTop = item.offsetTop;
+            const itemHeight = item.offsetHeight;
+            const itemCenter = itemTop - wheelScrollTop + (itemHeight / 2);
+            const distance = Math.abs(itemCenter - wheelCenter);
+
+            if (distance < minDistance) {
+              minDistance = distance;
+              nearestItem = item;
+            }
+          });
+
+          if (nearestItem) {
+            const itemTop = nearestItem.offsetTop;
+            const itemHeight = nearestItem.offsetHeight;
+            const targetScroll = itemTop - wheelCenter + (itemHeight / 2);
+            
+            isScrolling = true;
+            wheel.scrollTo({
+              top: targetScroll,
+              behavior: "smooth"
+            });
+            
+            setTimeout(() => {
+              updateSelectedCategory();
+              isScrolling = false;
+            }, 300);
+          }
+        }
+
+        // 클릭 이벤트
+        wheel.addEventListener("click", (e) => {
+          if (e.target.classList.contains("category-item")) {
+            const item = e.target;
+            const itemTop = item.offsetTop;
+            const itemHeight = item.offsetHeight;
+            const wheelCenter = wheel.clientHeight / 2;
+            const scrollTo = itemTop - wheelCenter + (itemHeight / 2);
+            
+            isScrolling = true;
+            wheel.scrollTo({
+              top: scrollTo,
+              behavior: "smooth"
+            });
+            
+            setTimeout(() => {
+              updateSelectedCategory();
+              isScrolling = false;
+            }, 300);
+          }
+        });
+
+        function updateSelectedCategory() {
+          const items = wheel.querySelectorAll(".category-item");
+          const wheelCenter = wheel.clientHeight / 2;
+          const wheelScrollTop = wheel.scrollTop;
+          
+          let selectedItem = null;
+          let minDistance = Infinity;
+
+          items.forEach((item) => {
+            const itemTop = item.offsetTop;
+            const itemHeight = item.offsetHeight;
+            const itemCenter = itemTop - wheelScrollTop + (itemHeight / 2);
+            const distance = Math.abs(itemCenter - wheelCenter);
+
+            if (distance < minDistance) {
+              minDistance = distance;
+              selectedItem = item;
+            }
+          });
+
+          // 선택 상태 업데이트
+          items.forEach((item) => {
+            item.classList.remove("selected");
+          });
+
+          if (selectedItem) {
+            selectedItem.classList.add("selected");
+            const newCategory = selectedItem.dataset.value || "";
+            if (newCategory !== currentCategory) {
+              currentCategory = newCategory;
+              currentVerseIndex = 0;
+              renderSubNav();
+              renderVerse();
+            }
+          }
+        }
+
+        // 초기 스크롤 위치 설정 (첫 번째 항목을 가운데로)
+        setTimeout(() => {
+          const firstItem = wheel.querySelector(".category-item");
+          if (firstItem) {
+            const itemHeight = firstItem.offsetHeight;
+            wheel.scrollTop = firstItem.offsetTop - (wheel.clientHeight / 2) + (itemHeight / 2);
+          }
+        }, 50);
+      }
+
+      function renderSubNav() {
+        const subnav = document.getElementById("subnav");
+        subnav.innerHTML = "";
+        if (!currentCategory) return;
+
+        const filtered = verses.filter((v) => v.cat === currentCategory);
+        filtered.forEach((v, idx) => {
+          const btn = document.createElement("button");
+          btn.textContent = idx + 1;
+          btn.className = "subnav-btn" + (idx === currentVerseIndex ? " active" : "");
+          btn.onclick = () => {
+            currentVerseIndex = idx;
+            renderSubNav();
+            renderVerse();
+          };
+          subnav.appendChild(btn);
+        });
+      }
+
+      function renderVerse() {
+        const area = document.getElementById("practice-area");
+        area.innerHTML = "";
+
+        if (!currentCategory) return;
+
+        const filtered = verses.filter((v) => v.cat === currentCategory);
+        const verse = filtered[currentVerseIndex];
+        if (!verse) return;
+
+        const div = document.createElement("div");
+        div.className = "verse-container";
+        div.innerHTML = `
+          <div class="verse-label">
+            <span class="ref-text">${verse.ref}</span>
+            <span></span>
+            <span id="status-${verse.ref}" class="status"></span>
+            <button id="btn-${verse.ref}">확인</button>
+            <button id="clean-${verse.ref}">초기화</button>
+          </div>
+          <textarea id="input-${verse.ref}" placeholder="직접 입력해보세요..."></textarea>
+          <div id="result-${verse.ref}" class="result"></div>
+          <div id="original-${verse.ref}" class="original-text"></div>
+        `;
+        area.appendChild(div);
+
+        const textarea = document.getElementById(`input-${verse.ref}`);
+        const checkBtn = document.getElementById(`btn-${verse.ref}`);
+        const cleanBtn = document.getElementById(`clean-${verse.ref}`);
+        const status = document.getElementById(`status-${verse.ref}`);
+        const originalDiv = document.getElementById(`original-${verse.ref}`);
+        const resultDiv = document.getElementById(`result-${verse.ref}`);
+
+        checkBtn.onclick = () => {
+          const original = verse.text.replace(/\s+/g, "");
+          const userInput = textarea.value.replace(/\s+/g, "");
+          let correct = userInput === original;
+          status.textContent = correct ? "정답" : "오답";
+          status.style.color = correct ? "green" : "red";
+
+          // 차이 표시
+          let result = "";
+          const maxLen = Math.max(original.length, userInput.length);
+          for (let i = 0; i < maxLen; i++) {
+            if (original[i] !== userInput[i]) {
+              result += `<span class="diff">${userInput[i] || ""}</span>`;
+            } else {
+              result += userInput[i] || "";
+            }
+          }
+          resultDiv.innerHTML = result || "<span style='color:#999;'>입력 내용이 없습니다.</span>";
+          originalDiv.textContent = verse.text;
+          originalDiv.style.display = "block";
+        };
+
+        cleanBtn.onclick = () => {
+          textarea.value = "";
+          resultDiv.innerHTML = "";
+          originalDiv.style.display = "none";
+          status.textContent = "";
+        };
+
+        textarea.addEventListener("keydown", (e) => {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            checkBtn.click();
+          }
+        });
+      }
+
+      initCategorySelect();
+    </script>
+  </body>
+</html>
+
