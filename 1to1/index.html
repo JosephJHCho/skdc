@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
   <head>
     <meta charset="UTF-8" />
@@ -34,7 +34,7 @@
 
       #category-select::before,
       #category-select::after {
-        content: '';
+        content: "";
         position: absolute;
         left: 0;
         right: 0;
@@ -162,6 +162,15 @@
         color: white;
       }
 
+      .verse-label button.voice-btn {
+        background-color: #28a745;
+        color: white;
+      }
+
+      .verse-label button.voice-btn.listening {
+        background-color: #dc3545;
+      }
+
       textarea {
         width: 100%;
         height: 180px;
@@ -279,6 +288,80 @@
       let currentCategory = "";
       let currentVerseIndex = 0;
 
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      let activeRecognition = null;
+
+      function stopVoiceInput() {
+        if (activeRecognition) {
+          activeRecognition.abort();
+          activeRecognition = null;
+        }
+      }
+
+      function checkAnswer(textarea, verse, status, originalDiv, resultDiv) {
+        const original = verse.text.replace(/\s+/g, "");
+        const userInput = textarea.value.replace(/\s+/g, "");
+        const correct = userInput === original;
+        status.textContent = correct ? "정답" : "오답";
+        status.style.color = correct ? "green" : "red";
+
+        let result = "";
+        const maxLen = Math.max(original.length, userInput.length);
+        for (let i = 0; i < maxLen; i++) {
+          if (original[i] !== userInput[i]) {
+            result += `<span class="diff">${userInput[i] || ""}</span>`;
+          } else {
+            result += userInput[i] || "";
+          }
+        }
+        resultDiv.innerHTML = result || "<span style='color:#999;'>입력 내용이 없습니다.</span>";
+        originalDiv.textContent = verse.text;
+        originalDiv.style.display = "block";
+      }
+
+      function startVoiceInput(textarea, voiceBtn, onComplete) {
+        if (!SpeechRecognition) {
+          alert("이 브라우저는 음성 인식을 지원하지 않습니다. Chrome 등을 사용해 주세요.");
+          return;
+        }
+
+        stopVoiceInput();
+
+        const recognition = new SpeechRecognition();
+        recognition.lang = "ko-KR";
+        recognition.continuous = false;
+        recognition.interimResults = false;
+        activeRecognition = recognition;
+
+        voiceBtn.textContent = "듣는 중";
+        voiceBtn.classList.add("listening");
+
+        recognition.onresult = (event) => {
+          const transcript = event.results[0][0].transcript;
+          textarea.value = transcript;
+          onComplete();
+        };
+
+        recognition.onerror = (event) => {
+          if (event.error !== "aborted") {
+            const messages = {
+              "not-allowed": "마이크 사용 권한이 필요합니다.",
+              "no-speech": "음성이 감지되지 않았습니다. 다시 시도해 주세요.",
+              "network": "음성 인식을 위해 네트워크 연결이 필요합니다.",
+            };
+            alert(messages[event.error] || "음성 인식 중 오류가 발생했습니다.");
+          }
+        };
+
+        recognition.onend = () => {
+          activeRecognition = null;
+          voiceBtn.textContent = "음성";
+          voiceBtn.classList.remove("listening");
+        };
+
+        recognition.start();
+      }
+
       function initCategorySelect() {
         const wheel = document.getElementById("category-wheel");
 
@@ -337,106 +420,118 @@
         let lastTouchTime = 0;
         let momentumAnimation = null;
 
-        wheel.addEventListener("touchstart", (e) => {
-          isTouching = true;
-          touchStartY = e.touches[0].clientY;
-          touchStartTime = Date.now();
-          touchStartScrollTop = wheel.scrollTop;
-          lastTouchY = touchStartY;
-          lastTouchTime = touchStartTime;
-          velocity = 0;
-          
-          // 기존 관성 애니메이션 취소
-          if (momentumAnimation) {
-            cancelAnimationFrame(momentumAnimation);
-            momentumAnimation = null;
-          }
-        }, { passive: true });
+        wheel.addEventListener(
+          "touchstart",
+          (e) => {
+            isTouching = true;
+            touchStartY = e.touches[0].clientY;
+            touchStartTime = Date.now();
+            touchStartScrollTop = wheel.scrollTop;
+            lastTouchY = touchStartY;
+            lastTouchTime = touchStartTime;
+            velocity = 0;
 
-        wheel.addEventListener("touchmove", (e) => {
-          if (!isTouching) return;
-          
-          e.preventDefault();
-          const touchY = e.touches[0].clientY;
-          const currentTime = Date.now();
-          
-          // 속도 계산
-          if (lastTouchTime > 0) {
-            const timeDelta = currentTime - lastTouchTime;
-            const distanceDelta = lastTouchY - touchY;
-            if (timeDelta > 0) {
-              velocity = distanceDelta / timeDelta;
+            // 기존 관성 애니메이션 취소
+            if (momentumAnimation) {
+              cancelAnimationFrame(momentumAnimation);
+              momentumAnimation = null;
             }
-          }
-          
-          const delta = touchStartY - touchY;
-          wheel.scrollTop = touchStartScrollTop + delta;
-          
-          lastTouchY = touchY;
-          lastTouchTime = currentTime;
-        }, { passive: false });
+          },
+          { passive: true },
+        );
 
-        wheel.addEventListener("touchend", (e) => {
-          if (!isTouching) return;
-          isTouching = false;
-          
-          const touchEndTime = Date.now();
-          const touchDuration = touchEndTime - touchStartTime;
-          const touchDistance = touchStartY - lastTouchY;
-          
-          // 빠른 스와이프 감지 (관성 스크롤)
-          if (touchDuration < 300 && Math.abs(touchDistance) > 10) {
-            const itemHeight = wheel.querySelector(".category-item")?.offsetHeight || 40;
-            const momentum = velocity * 200; // 관성 배율
-            
-            let targetScroll = wheel.scrollTop + momentum;
-            const maxScroll = wheel.scrollHeight - wheel.clientHeight;
-            targetScroll = Math.max(0, Math.min(targetScroll, maxScroll));
-            
-            // 부드러운 관성 스크롤
-            const startScroll = wheel.scrollTop;
-            const distance = targetScroll - startScroll;
-            const duration = Math.min(500, Math.abs(distance) * 2);
-            const startTime = Date.now();
-            
-            function animate() {
-              const elapsed = Date.now() - startTime;
-              const progress = Math.min(elapsed / duration, 1);
-              // ease-out 함수
-              const easeProgress = 1 - Math.pow(1 - progress, 3);
-              
-              wheel.scrollTop = startScroll + (distance * easeProgress);
-              
-              if (progress < 1) {
-                momentumAnimation = requestAnimationFrame(animate);
-              } else {
-                // 스크롤 완료 후 가장 가까운 항목으로 스냅
-                snapToNearestItem();
+        wheel.addEventListener(
+          "touchmove",
+          (e) => {
+            if (!isTouching) return;
+
+            e.preventDefault();
+            const touchY = e.touches[0].clientY;
+            const currentTime = Date.now();
+
+            // 속도 계산
+            if (lastTouchTime > 0) {
+              const timeDelta = currentTime - lastTouchTime;
+              const distanceDelta = lastTouchY - touchY;
+              if (timeDelta > 0) {
+                velocity = distanceDelta / timeDelta;
               }
             }
-            
-            momentumAnimation = requestAnimationFrame(animate);
-          } else {
-            // 느린 스와이프나 탭의 경우 바로 스냅
-            setTimeout(() => {
-              snapToNearestItem();
-            }, 100);
-          }
-        }, { passive: true });
+
+            const delta = touchStartY - touchY;
+            wheel.scrollTop = touchStartScrollTop + delta;
+
+            lastTouchY = touchY;
+            lastTouchTime = currentTime;
+          },
+          { passive: false },
+        );
+
+        wheel.addEventListener(
+          "touchend",
+          (e) => {
+            if (!isTouching) return;
+            isTouching = false;
+
+            const touchEndTime = Date.now();
+            const touchDuration = touchEndTime - touchStartTime;
+            const touchDistance = touchStartY - lastTouchY;
+
+            // 빠른 스와이프 감지 (관성 스크롤)
+            if (touchDuration < 300 && Math.abs(touchDistance) > 10) {
+              const itemHeight = wheel.querySelector(".category-item")?.offsetHeight || 40;
+              const momentum = velocity * 200; // 관성 배율
+
+              let targetScroll = wheel.scrollTop + momentum;
+              const maxScroll = wheel.scrollHeight - wheel.clientHeight;
+              targetScroll = Math.max(0, Math.min(targetScroll, maxScroll));
+
+              // 부드러운 관성 스크롤
+              const startScroll = wheel.scrollTop;
+              const distance = targetScroll - startScroll;
+              const duration = Math.min(500, Math.abs(distance) * 2);
+              const startTime = Date.now();
+
+              function animate() {
+                const elapsed = Date.now() - startTime;
+                const progress = Math.min(elapsed / duration, 1);
+                // ease-out 함수
+                const easeProgress = 1 - Math.pow(1 - progress, 3);
+
+                wheel.scrollTop = startScroll + distance * easeProgress;
+
+                if (progress < 1) {
+                  momentumAnimation = requestAnimationFrame(animate);
+                } else {
+                  // 스크롤 완료 후 가장 가까운 항목으로 스냅
+                  snapToNearestItem();
+                }
+              }
+
+              momentumAnimation = requestAnimationFrame(animate);
+            } else {
+              // 느린 스와이프나 탭의 경우 바로 스냅
+              setTimeout(() => {
+                snapToNearestItem();
+              }, 100);
+            }
+          },
+          { passive: true },
+        );
 
         // 가장 가까운 항목으로 스냅하는 함수
         function snapToNearestItem() {
           const items = wheel.querySelectorAll(".category-item");
           const wheelCenter = wheel.clientHeight / 2;
           const wheelScrollTop = wheel.scrollTop;
-          
+
           let nearestItem = null;
           let minDistance = Infinity;
 
           items.forEach((item) => {
             const itemTop = item.offsetTop;
             const itemHeight = item.offsetHeight;
-            const itemCenter = itemTop - wheelScrollTop + (itemHeight / 2);
+            const itemCenter = itemTop - wheelScrollTop + itemHeight / 2;
             const distance = Math.abs(itemCenter - wheelCenter);
 
             if (distance < minDistance) {
@@ -448,14 +543,14 @@
           if (nearestItem) {
             const itemTop = nearestItem.offsetTop;
             const itemHeight = nearestItem.offsetHeight;
-            const targetScroll = itemTop - wheelCenter + (itemHeight / 2);
-            
+            const targetScroll = itemTop - wheelCenter + itemHeight / 2;
+
             isScrolling = true;
             wheel.scrollTo({
               top: targetScroll,
-              behavior: "smooth"
+              behavior: "smooth",
             });
-            
+
             setTimeout(() => {
               updateSelectedCategory();
               isScrolling = false;
@@ -470,14 +565,14 @@
             const itemTop = item.offsetTop;
             const itemHeight = item.offsetHeight;
             const wheelCenter = wheel.clientHeight / 2;
-            const scrollTo = itemTop - wheelCenter + (itemHeight / 2);
-            
+            const scrollTo = itemTop - wheelCenter + itemHeight / 2;
+
             isScrolling = true;
             wheel.scrollTo({
               top: scrollTo,
-              behavior: "smooth"
+              behavior: "smooth",
             });
-            
+
             setTimeout(() => {
               updateSelectedCategory();
               isScrolling = false;
@@ -489,14 +584,14 @@
           const items = wheel.querySelectorAll(".category-item");
           const wheelCenter = wheel.clientHeight / 2;
           const wheelScrollTop = wheel.scrollTop;
-          
+
           let selectedItem = null;
           let minDistance = Infinity;
 
           items.forEach((item) => {
             const itemTop = item.offsetTop;
             const itemHeight = item.offsetHeight;
-            const itemCenter = itemTop - wheelScrollTop + (itemHeight / 2);
+            const itemCenter = itemTop - wheelScrollTop + itemHeight / 2;
             const distance = Math.abs(itemCenter - wheelCenter);
 
             if (distance < minDistance) {
@@ -527,7 +622,7 @@
           const firstItem = wheel.querySelector(".category-item");
           if (firstItem) {
             const itemHeight = firstItem.offsetHeight;
-            wheel.scrollTop = firstItem.offsetTop - (wheel.clientHeight / 2) + (itemHeight / 2);
+            wheel.scrollTop = firstItem.offsetTop - wheel.clientHeight / 2 + itemHeight / 2;
           }
         }, 50);
       }
@@ -552,6 +647,7 @@
       }
 
       function renderVerse() {
+        stopVoiceInput();
         const area = document.getElementById("practice-area");
         area.innerHTML = "";
 
@@ -566,7 +662,7 @@
         div.innerHTML = `
           <div class="verse-label">
             <span class="ref-text">${verse.ref}</span>
-            <span></span>
+            <button id="voice-${verse.ref}" class="voice-btn">음성</button>
             <span id="status-${verse.ref}" class="status"></span>
             <button id="btn-${verse.ref}">확인</button>
             <button id="clean-${verse.ref}">초기화</button>
@@ -580,33 +676,29 @@
         const textarea = document.getElementById(`input-${verse.ref}`);
         const checkBtn = document.getElementById(`btn-${verse.ref}`);
         const cleanBtn = document.getElementById(`clean-${verse.ref}`);
+        const voiceBtn = document.getElementById(`voice-${verse.ref}`);
         const status = document.getElementById(`status-${verse.ref}`);
         const originalDiv = document.getElementById(`original-${verse.ref}`);
         const resultDiv = document.getElementById(`result-${verse.ref}`);
 
-        checkBtn.onclick = () => {
-          const original = verse.text.replace(/\s+/g, "");
-          const userInput = textarea.value.replace(/\s+/g, "");
-          let correct = userInput === original;
-          status.textContent = correct ? "정답" : "오답";
-          status.style.color = correct ? "green" : "red";
+        const runCheck = () => checkAnswer(textarea, verse, status, originalDiv, resultDiv);
 
-          // 차이 표시
-          let result = "";
-          const maxLen = Math.max(original.length, userInput.length);
-          for (let i = 0; i < maxLen; i++) {
-            if (original[i] !== userInput[i]) {
-              result += `<span class="diff">${userInput[i] || ""}</span>`;
-            } else {
-              result += userInput[i] || "";
-            }
+        checkBtn.onclick = runCheck;
+
+        voiceBtn.onclick = () => {
+          if (activeRecognition) {
+            stopVoiceInput();
+            voiceBtn.textContent = "음성";
+            voiceBtn.classList.remove("listening");
+            return;
           }
-          resultDiv.innerHTML = result || "<span style='color:#999;'>입력 내용이 없습니다.</span>";
-          originalDiv.textContent = verse.text;
-          originalDiv.style.display = "block";
+          startVoiceInput(textarea, voiceBtn, runCheck);
         };
 
         cleanBtn.onclick = () => {
+          stopVoiceInput();
+          voiceBtn.textContent = "음성";
+          voiceBtn.classList.remove("listening");
           textarea.value = "";
           resultDiv.innerHTML = "";
           originalDiv.style.display = "none";
@@ -625,4 +717,3 @@
     </script>
   </body>
 </html>
-
