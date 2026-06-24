@@ -333,7 +333,7 @@ const verses = [
         originalDiv.style.display = "block";
       }
 
-      function startVoiceInput(textarea, voiceBtn, onComplete) {
+      function startVoiceInput(textarea, voiceBtn) {
         if (!SpeechRecognition) {
           alert("이 브라우저는 음성 인식을 지원하지 않습니다. Chrome 등을 사용해 주세요.");
           return;
@@ -353,7 +353,6 @@ const verses = [
         recognition.onresult = (event) => {
           const transcript = event.results[0][0].transcript;
           textarea.value = transcript;
-          onComplete();
         };
 
         recognition.onerror = (event) => {
@@ -706,7 +705,7 @@ const verses = [
             voiceBtn.classList.remove("listening");
             return;
           }
-          startVoiceInput(textarea, voiceBtn, runCheck);
+          startVoiceInput(textarea, voiceBtn);
         };
 
         cleanBtn.onclick = () => {
